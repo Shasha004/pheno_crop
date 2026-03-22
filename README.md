@@ -1,10 +1,8 @@
-# Crop Growth Stage Detection
+# Crop Growth Stage Detection from Satellite Imagery
 
-Sentinel-2 datasets are downloaded from [Copernicus Browser](https://browser.dataspace.copernicus.eu/?zoom=5&lat=50.16282&lng=20.78613&themeId=DEFAULT-THEME&visualizationUrl=U2FsdGVkX1%2FvqjKZGIcuGpQzoqzkvyi5B5LXUL%2B5iQa10CxXgb51IJtDNG9hFI7bi2YZtkeZYzGtmJu1qTqaZPV37pY5zjUmOuPAFve2N2BQvJRSj2NoHfhSTr9SgONi&datasetId=S2_L2A_CDAS&demSource3D=%22MAPZEN%22&cloudCoverage=30&dateMode=SINGLE) and uploaded to Kaggle for experimentation. 
+Sentinel-1 and Sentinel-2 are sourced from Google Earth Engine. The scripts for fetching them can be found in `Pheno_Crop.ipynb` at project root.
 
-Google Earth Engine source is not yet verified.
-
-## References:
+### References:
 
 + [Temporal Self Attention and Multi-Sensor Fusion](https://github.com/ellaampy/CropTypeMapping)
 + [Cloud Imputation - SEN12MS-CR](https://patricktum.github.io/cloud_removal/sen12mscr/)
