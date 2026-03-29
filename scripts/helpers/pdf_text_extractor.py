@@ -74,16 +74,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Extract text from all PDFs in a directory."
     )
+    repo_root = Path(__file__).resolve().parents[2]
     parser.add_argument(
         "--src",
         type=Path,
-        default=Path(__file__).parent.parent / "references",
+        default=repo_root / "references",
         help="Source directory containing PDF files (default: repo/references)",
     )
     parser.add_argument(
         "--dst",
         type=Path,
-        default=Path(__file__).parent.parent / "references" / "text",
+        default=repo_root / "references" / "text",
         help="Destination directory for text files (default: references/text)",
     )
     args = parser.parse_args()
