@@ -1,12 +1,12 @@
 # Crop Growth Stage Detection from Satellite Imagery
 
-Sentinel-1 and Sentinel-2 are sourced from Google Earth Engine. The scripts for fetching them can be found in `Pheno_Crop_Data.ipynb` at project root.
+Sentinel-1 and Sentinel-2 are sourced from Google Earth Engine. The scripts for fetching them can be found in `fetch_data.ipynb` at project root.
 
 The primary challenge in remote sensing lies in the nature of the data itself: agricultural environments are highly dynamic, and the satellite telemetry used to monitor them is inherently asynchronous and noisy. To capture the full spectrum of a winter wheat crop's growth cycle (Stages 0 through 4), this architecture relies on two independent data streams extracted via Google Earth Engine.
 
 ---
 
-## 1. Dual Stream Hybrid Network
+## Model 1: Dual Stream Hybrid Network
 
 **Architecture Overview:**
 
