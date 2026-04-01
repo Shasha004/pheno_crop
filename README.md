@@ -92,10 +92,80 @@ Finally, while lighter architectures like the Lightweight Temporal Attention Enc
 
 <img width="500" height="450" alt="image" src="https://github.com/user-attachments/assets/64d13128-29eb-44d5-a677-4ca0bfae8dc6" />
 
-
-> **Important Note on Current Metrics:** Some currently reported scores are likely inflated because of evaluation leakage risks, including event-level random splitting (instead of strict plot-level/group splits), temporal overlap within the same plot context between train/validation samples, and running inference over the full dataset used during model development. Treat those numbers as exploratory, not final generalization performance. Working on this is here: `model_2.ipynb`
-
 ---
+<br>
+
+> **Important Note on Above Metrics:** Some currently reported scores are likely inflated because of evaluation leakage risks, including event-level random splitting (instead of strict plot-level/group splits), temporal overlap within the same plot context between train/validation samples, and running inference over the full dataset used during model development. Treat those numbers as exploratory, not final generalization performance. Work on this is here: `model_2.ipynb`
+
+## Model 2: Leakage-Aware Dual-Stream Network
+
+**Architecture Overview:**
+
+- Model 2 keeps the same multi-modal philosophy as Model 1, but restructures training and evaluation around strict plot-level isolation.
+- The input pipeline builds two asynchronous sequences per event over a 90-day lookback, capped to 30 observations.
+- The Optical branch uses a CNN + Transformer encoder stack with learned time embeddings and masked pooling.
+- The Radar branch uses a CNN + bidirectional GRU stack with masked pooling and linear projection.
+- The two modality embeddings are concatenated and passed through a regularized MLP classifier for 5-stage prediction.
+
+### Leakage-Aware Data Protocol
+
+Model 2 is built to reduce overly optimistic metrics caused by split leakage. Instead of random event-level splitting, the dataset is partitioned by `plot_id` using group-aware splitting logic. A plot can only appear in exactly one of train, validation, or test.
+
+This structure directly targets the most common failure mode in agricultural time-series experiments, where near-identical temporal neighborhoods from the same field leak across splits. By forcing disjoint plot groups, Model 2 evaluates generalization on genuinely unseen fields rather than memorized local patterns.
+
+### Temporal Representation
+
+For each ground-truth event, the data loader creates separate Sentinel-1 and Sentinel-2 sequences anchored to the target date. Each observation is encoded with a relative `days_ago` index, preserving asynchronous sampling without interpolation.
+
+The sequence builder also uses explicit masks to distinguish valid observations from padded positions. This allows downstream temporal layers to pool only real events and ignore synthetic padding.
+
+### Optical Branch (Sentinel-2)
+
+The optical encoder ingests a 9-feature tensor per time step: vegetation indices and cloud percentage metadata. A two-layer 1D CNN first extracts short-range temporal patterns and local trend structure.
+
+The projected features are combined with a learned temporal embedding (`Embedding(120, 64)`) derived from `days_ago`, then passed through a 2-layer Transformer encoder (4 heads, feedforward 128, dropout 0.25).
+
+The output is summarized with masked mean pooling, producing a fixed-size optical embedding that focuses on valid timestamps only.
+
+### Radar Branch (Sentinel-1)
+
+The radar encoder processes VV, VH, and VH/VV ratio through a two-layer 1D CNN front-end, then models sequence dynamics with a 2-layer bidirectional GRU.
+
+As with the optical stream, masked mean pooling extracts a robust sequence summary from valid positions. A linear projection then maps the bidirectional GRU output back into a compact modality embedding.
+
+### Fusion and Classifier Head
+
+The optical and radar embeddings are concatenated into a fused feature vector and fed into a classifier head:
+
+- Linear(128 -> 96)
+- BatchNorm1d(96)
+- ReLU
+- Dropout(0.4)
+- Linear(96 -> 5)
+
+This late-fusion design preserves modality-specific temporal modeling before decision-level integration.
+
+### Training Strategy
+
+Model 2 uses class-balanced cross-entropy with label smoothing (`0.05`), AdamW optimization, ReduceLROnPlateau scheduling on validation macro-F1, and early stopping.
+
+Validation and test reporting prioritize macro-F1 and per-class recall, alongside confusion matrices and detailed classification reports. This is better aligned with imbalanced stage distributions than relying on accuracy alone.
+
+### Why Model 2 Is More Reliable
+
+Model 2 improves trustworthiness through:
+
+- strict group-based train/val/test partitioning by plot,
+- explicit padded-step masking in both branches,
+- stronger regularization in the classifier,
+- evaluation centered on macro-F1 and class-wise behavior.
+
+The result is a cleaner estimate of field-level generalization while preserving the dual-sensor architecture that performed well in this project.
+
+Currently testing it on a larger dataset, will attach results once done.
+
+<br>
+
 
 ## References
 
